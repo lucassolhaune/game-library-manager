@@ -9,7 +9,7 @@ import {
     Button,
     Alert,
     CircularProgress,
-    Link as MuiLink, Stack
+    Stack
 } from '@mui/material';
 
 export default function Login (){
@@ -24,7 +24,7 @@ export default function Login (){
 
     //Función que se ejecuta al intentar entrar
     const handleLogin = () =>{
-        //Se fija que los campos NO esten vacío
+        //Se fija que los campos NO esten vacío y si el usuario pone espacios los saca
         if(username.trim() !== '' && password.trim() !== ''){
             setError(false);
             setLoading(true);
@@ -65,14 +65,25 @@ export default function Login (){
                         disabled={loading} // Se deshabilita mientras carga
                     >
                         {/*Si loading es true*/}
-
                         {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
                     </Button>
-
                     {/* Alerta de Error (se muestra solo si error es true) */}
                     {error && (
                         <Alert severity="error">Por favor, completa los datos</Alert>
                     )}
+                    <Typography
+                        variant="h6"
+                        component="h1">
+                        ¿No tienes una cuenta?
+                    </Typography>
+                    <Button
+                        onClick={() => navigate('/registerUser')} // <--- CAMBIAR A ESTO
+                        variant="outlined"
+                        fullWidth
+                        disabled={loading}
+                    >
+                        Crear cuenta nueva
+                    </Button>
                 </Stack>
             </Box>
         </Container>
