@@ -1,97 +1,155 @@
 import React, { useState } from "react";
-import {Button, Typography, Box, Container, TextField, List, ListItem, ListItemText, IconButton } from "@mui/material";
-import DeleteIcon from '@mui/icons-material/Delete';
-import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
-import BackButton from '../components/BackButton';
+import {
+  Alert,
+  Button,
+  Modal,
+  Snackbar,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { Game } from "../types/Game";
 
-export default function Add() {
-  const [listaJuegos, setListaJuegos] = useState<string[]>([]);
+// Definición de los tipos de las propiedades (props) que el componente recibe desde el padre (Games.tsx)
+type Props = {
+  open: boolean;            // Controla si el modal está visible o no
+  onClose: () => void;      // Función para cerrar el modal
+  onGameSave: (game: Game) => void; // Función para guardar el juego en la lista del padre
+};
 
-  const [juegos, setJuegos] = useState<string[]>([]);
-  
-  const [nombreJuego, setNombreJuego] = useState("");
-
-// FUNCIÓN PARA AGREGAR
-    const agregarJuego = () => {
-    // Verificamos que no esté vacío
-    console.info({
-      nombreJuego,
-      nombreJuegoTrimmeado: nombreJuego.trim()
-    })
-    if (nombreJuego.trim() !== "") { //.trim(), Borra los espacios vacios en una cadena de texto.
-      // Agregamos el nuevo juego copiando los que ya estaban (...juegos)
-      setJuegos([...juegos, nombreJuego]);
-      // Limpiamos el campo de texto para escribir uno nuevo
-      setNombreJuego(""); 
+export default function AddGameModal({ open, onClose, onGameSave }: Props) {
+  // --- ESTADOS LOCALES ---
+  // Guardan los valores de los inputs. Se inicializan como undefined.
+  const [name, setName] = useState<string | undefined>();
+  const [category, setCategory] = useState<string | undefined>();
+  const [year, setYear] = useState<number | undefined>();
+  // Estados para el manejo de errores y feedback visual
+  const [error, setError] = useState<boolean>(false);
+  const [showSnackBar, setShowSnackBar] = useState(false);
+  // Agregado de juegos con sus datos
+  const agregarJuego = () => {
+    // Validación básica: comprobamos que existan valores, no sean solo espacios y el año sea > 0
+    if (
+      !!name && name.trim().length > 0 &&
+      !!category && category.trim().length > 0 &&
+      !!year && year > 0
+    ) {
+      // Enviamos el objeto juego al componente padre
+      onGameSave({
+        name,
+        category,
+        year,
+      });
+      // Mostramos el mensaje de éxito (SnackBar)
+      setShowSnackBar(true);
+      // Limpiamos los campos para que la próxima vez el formulario esté vacío
+      setName("");
+      setCategory("");
+      setYear(undefined);
+      setError(false);
+      // Cerramos el modal automáticamente tras el éxito
+      onClose();
+    } else {
+      // Si la validación falla, activamos el estado de error
+      setError(true);
     }
   };
-  // FUNCIÓN PARA ELIMINAR UNO ESPECÍFICO
-  const eliminarJuego = (indexAEliminar: number) => {
-    // Filtramos la lista: nos quedamos con todos EXCEPTO el que tocaste
-    const nuevaLista = juegos.filter((_, index) => index !== indexAEliminar);
-    setJuegos(nuevaLista);
+  // Función que renderiza condicionalmente la alerta de error
+  const getSuccessAlert = () => {
+    if (error) {
+      return <Alert severity="error">Por favor, rellena todos los campos correctamente.</Alert>;
+    }
+    return null;
   };
-  
+  // Esta variable será true si ALGUNO de los campos está vacío o es inválido
+  const isButtonDisabled = !name || name.trim() === "";
+
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '85vh', padding: '40px 0' }}>
-        
-        <Box sx={{ 
-          width: '100%', padding: '40px', borderRadius: '24px', 
-          background: 'linear-gradient(135deg, rgba(31, 41, 55, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%)',
-          backdropFilter: 'blur(15px)', border: '1px solid rgba(105, 171, 207, 0.2)', 
-          boxShadow: '0 20px 50px rgba(27, 1, 46, 0.5), 0 0 40px rgba(105, 171, 207, 0.15)', 
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-        }}>
-          
-          {/* EL BOTÓN DE VOLVER */}
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
-            <BackButton />
-          </Box>
-
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'white', mb: 4, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <VideogameAssetIcon fontSize="large" sx={{ color: '#69ABCF' }} /> 
-            Añadir a Biblioteca
+    <>
+      {/* Snackbar: Un mensaje flotante que aparece brevemente al guardar con éxito */}
+      <Snackbar
+         open={showSnackBar}
+         autoHideDuration={2000}
+         onClose={() => setShowSnackBar(false)}
+         message="¡Juego agregado correctamente!"
+      />
+      {/* Modal: El contenedor principal del formulario */}
+      <Modal open={open} onClose={onClose}>
+        {/* Stack: Componente de MUI para organizar elementos en columna con espaciado */}
+        <Stack
+          spacing={2}
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)", // Centra el modal en pantalla
+            width: { xs: '90%', sm: 600 }, // Responsivo: 90% en móvil, 600px en escritorio
+            backgroundColor: "#fff",
+            p: 4,
+            borderRadius: 2,
+            boxShadow: 24,
+          }}
+        >
+          <Typography
+              variant="h4"
+              sx={{ mb: 2 }}
+          >
+            Agregar Juego
           </Typography>
+          {/* Campos de entrada vinculados a sus respectivos estados locales */}
+          <TextField
+            label="Nombre del Juego"
+            value={name || ""}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth
+            variant="outlined"
+            placeholder="Ej: Counter Strike 2"
+          />
 
-          <Box sx={{ width: '100%', display: 'flex', gap: 2, mb: 4 }}>
-            <TextField 
-            value={nombreJuego}
-            onChange={(e) => setNombreJuego(e.target.value)}
-              fullWidth
-              variant="outlined"
-              placeholder="Ej: Counter Strike 2"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'white',
-                  backgroundColor: 'rgba(0,0,0,0.4)',
-                  borderRadius: '12px',
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                  '&:hover fieldset': { borderColor: 'rgba(105, 171, 207, 0.5)' },
-                  '&.Mui-focused fieldset': { borderColor: '#69ABCF' },
-                }
-              }}
-            />
-            <Button
-            onClick={agregarJuego}
-              variant="contained" 
-              sx={{ 
-                backgroundColor: '#69ABCF', borderRadius: '12px', minWidth: '120px',
-                fontWeight: 'bold', '&:hover': { backgroundColor: '#5891b0' } 
-              }}
-            >
-              AGREGAR
-            </Button>
-          </Box>
+          <TextField
+            label="Categoría"
+            value={category || ""}
+            onChange={(e) => setCategory(e.target.value)}
+            fullWidth
+            variant="outlined"
+            placeholder="Ej: Shooter / Acción"
+          />
 
-          {/* LISTA DE JUEGOS  */}
-          <Box sx={{ width: '100%', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', minHeight: '150px', p: 2 }}>
-            <Typography variant="overline" sx={{ color: '#9ca3af', pl: 2 }}>
-              Juegos agregados recientemente
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-    </Container>
+          <TextField
+            label="Año de Lanzamiento"
+            type="number"
+            value={year || ""}
+            onChange={(e) => setYear(Number(e.target.value))}
+            fullWidth
+            variant="outlined"
+            placeholder="Ej: 2023"
+          />
+
+          <Button
+            onClick={onClose}
+            variant="outlined"
+            fullWidth
+            color="error" //Rojo para Cancelar la accion
+          >
+            CANCELAR
+          </Button>
+
+          {/* Botón que dispara la función de guardado */}
+          <Button
+             onClick={agregarJuego}
+             variant="contained"
+             size="large"
+             sx={{ mt: 2 }}
+             disabled={isButtonDisabled} // <- Boton disable hastas que el usuario ingrese algo
+             color={!isButtonDisabled ? "success" : "primary"}
+          >
+            AGREGAR
+          </Button>
+
+          {/* Renderizado de la alerta en caso de error de validación */}
+          {getSuccessAlert()}
+        </Stack>
+      </Modal>
+    </>
   );
 }
