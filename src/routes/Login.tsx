@@ -18,7 +18,7 @@ export default function Login (){
     //Defino estados para usuario y contraseña
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    //Definos dos estados más, uno de error y otro de cargando
+    //Defino dos estados más, uno de error y otro de cargando
     const [error, setError] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -29,7 +29,7 @@ export default function Login (){
             setError(false);
             setLoading(true);
 
-            //Simulamos que demora dos segundos en entrar
+            //Simula que demora dos segundos en entrar
             setTimeout(() =>{
                 navigate('/home');
                 }, 2000)
